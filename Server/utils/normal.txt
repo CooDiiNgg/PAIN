@@ -1,0 +1,22 @@
+Subject: Urgent: Password Reset Required
+
+Dear Ralitsa Gladnishka,
+
+We hope this email finds you well. We have recently made some security enhancements to our system and as a result, we kindly request you to reset your password for your account.
+
+To ensure the security of your account, please follow the steps below to reset your password:
+
+1. Visit our website at http://testingai.com.
+2. Click on the "Forgot Password" link.
+3. Enter your email address associated with your account.
+4. Follow the instructions provided to reset your password.
+
+Please note that this is a legitimate request from our team and it is important to reset your password as soon as possible to maintain the security of your account.
+
+If you have any questions or need further assistance, please do not hesitate to contact our support team at [Support Email] or call us at [Support Phone Number].
+
+Thank you for your attention to this matter.
+
+Best regards,
+Ivan Georgiev
+TestingAI
