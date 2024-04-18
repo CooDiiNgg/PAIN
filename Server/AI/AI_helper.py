@@ -22,7 +22,7 @@ class AI:
         self.text_response = self.response['message']['content']
         return self.text_response
     
-    def get_persentage(self, text):
+    def get_percentage(self, text):
         self.text_response = text
         try:
             self.current = self.text_response.split("%")[-2]
