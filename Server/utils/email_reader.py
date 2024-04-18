@@ -1,10 +1,8 @@
 import email
-import oauth2
 import imaplib
 import ssl
 import re
 from bs4 import BeautifulSoup
-
 
 
 class EmailReader:
