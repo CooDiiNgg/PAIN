@@ -2,10 +2,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from utils import *
+from email_validator import validate_email, EmailNotValidError
+
+from api import *
 from icons import icons
 
-activeLoginWindows = []
+activeWindows = []
 
 class Ui_MainWindow(object):
     def setupUi(self, mode, MainWindow):
@@ -85,7 +87,59 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QMetaObject.connectSlotsByName(MainWindow)
 
-        self.pushButton.clicked.connect(lambda: (MainWindow.close(), addUser(self.mode, self.usernameLineEdit.text(), self.passwordLineEdit.text())))
+        def submit():
+            class CustomMessageBox(QMessageBox):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    activeWindows.append(self)
+
+                def closeEvent(self, event):
+                    activeWindows.remove(self)
+                    event.accept()
+
+            username = self.usernameLineEdit.text()
+            password = self.passwordLineEdit.text()
+            
+            if self.mode == 'email':
+                try:
+                    emailinfo = validate_email(username, check_deliverability=False)
+                    username = emailinfo.normalized
+
+                except EmailNotValidError as e:
+                    msg = CustomMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setText('Error was encountered')
+                    msg.setInformativeText(str(e))
+                    msg.setWindowTitle('Pain Login Error')
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.setVisible(True)
+                    return
+                
+            if len(password) == 0:
+                msg = CustomMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+                msg.setText('Error was encountered')
+                msg.setInformativeText('Password field can not be empty!')
+                msg.setWindowTitle('Pain Login Error')
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.setVisible(True)
+                return
+
+            error = addUser(mode, username, password)
+
+            if error != None:
+                msg = CustomMessageBox()
+                msg.setIcon(QMessageBox.Critical)
+                msg.setText('Error was encountered')
+                msg.setInformativeText(error)
+                msg.setWindowTitle('Pain Login Error')
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.setVisible(True)
+                return
+
+            MainWindow.close()
+
+        self.pushButton.clicked.connect(submit)
 
 
     def retranslateUi(self, MainWindow):
@@ -100,10 +154,10 @@ def ActionUserAdd(mode, menu):
     class CustomMainWindow(QMainWindow):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            activeLoginWindows.append(self)
+            activeWindows.append(self)
 
         def closeEvent(self, event):
-            activeLoginWindows.remove(self)
+            activeWindows.remove(self)
             event.accept()
 
 
@@ -121,7 +175,7 @@ def updateUserRemoveMenu(mode, menu):
         icon = icons['active'] if user['active'] else icons['inactive']
         submenu = menu.addMenu(icon, user['username'])
         subaction = submenu.addAction(icons['confirm'], '&Confirm')
-        subaction.triggered.connect(lambda id=user['id']: deleteUser(mode, id))
+        subaction.triggered.connect(lambda *_, user=user: deleteUser(mode, user.get('id')))
 
 
 def updateUserViewMenu(mode, menu):
@@ -157,20 +211,24 @@ def updateMainMenu(app, menu):
     disabled = not appData['active']
 
     submenu = menu.addMenu(icons['add'], 'Add Account')
-    submenu.addAction(icons['email'], 'Email').triggered.connect(lambda menu=submenu: ActionUserAdd('email', menu))
+    submenu.addAction(icons['email'], 'Email').triggered.connect(lambda *_, menu=submenu: ActionUserAdd('email', menu))
     submenu.setDisabled(disabled)
 
     submenu = menu.addMenu(icons['remove'], 'Remove Account')
-    submenu.addMenu(icons['email'], 'Email').aboutToShow.connect(lambda menu=submenu: updateUserRemoveMenu('email', menu))
+    submenu.addMenu(icons['email'], 'Email').aboutToShow.connect(lambda *_, menu=submenu: updateUserRemoveMenu('email', menu))
     submenu.setDisabled(disabled)
 
     submenu = menu.addMenu(icons['view'], 'View Accounts')
-    submenu.addMenu(icons['email'], 'Email').aboutToShow.connect(lambda menu=submenu: updateUserViewMenu('email', menu))
+    submenu.addMenu(icons['email'], 'Email').aboutToShow.connect(lambda *_, menu=submenu: updateUserViewMenu('email', menu))
     submenu.setDisabled(disabled)
+
+    def shutdown(app):
+        shutdownServer()
+        app.quit()
 
     menu.addSeparator()
     subaction = menu.addAction(icons['quit'], '&Quit')
-    subaction.triggered.connect(app.quit)
+    subaction.triggered.connect(lambda *_, app=app: shutdown(app))
 
 
 
@@ -183,7 +241,7 @@ def main():
     systray.setVisible(True)
 
     menu = QMenu('PAIN')
-    menu.aboutToShow.connect(lambda: updateMainMenu(app, menu))
+    menu.aboutToShow.connect(lambda *_, app=app, menu=menu: updateMainMenu(app, menu))
     systray.setContextMenu(menu)
     app.exec_()
 

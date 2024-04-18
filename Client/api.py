@@ -37,7 +37,12 @@ def deactivateUser(mode, id):
 
 def addUser(mode, username, password):
     print(mode, username, password)
+    return None
 
 
 def deleteUser(mode, id):
     print(f'Delete User: {id}')
+
+
+def shutdownServer():
+    print('Shutdown Server')
