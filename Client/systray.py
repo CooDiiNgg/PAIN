@@ -2,61 +2,10 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-import typing
+from utils import *
+from icons import icons
 
-appInfo = {
-    'active': True,
-}
-
-
-def getUsersInfo():
-    return {
-        'email': [
-            { 'id': 1, 'username': 'example1@example.com', 'active': True, },
-            { 'id': 2, 'username': 'example2@example.com', 'active': False, },
-            { 'id': 3, 'username': 'example3@example.com', 'active': True, },
-        ],
-    }
-
-
-def getAppInfo():
-    return appInfo
-
-
-def activateMonitoring():
-    appInfo['active'] = True
-    print(f'Activate Monitoring')
-
-
-def deactivateMonitoring():
-    appInfo['active'] = False
-    print(f'Deactivate Monitoring')
-
-
-def activateUser(mode, id):
-    print(f'Activate User: {id}')
-
-
-def deactivateUser(mode, id):
-    print(f'Deactivate User: {id}')
-
-
-def deleteUser(mode, id):
-    print(f'Delete User: {id}')
-
-
-def addUser(mode, username, password):
-    print(mode, username, password)
-
-
-
-activeWindows = []
-
-
-main_icon = QIcon('icons/main.svg')
-active_icon = QIcon('icons/active.svg')
-inactive_icon = QIcon('icons/inactive.svg')
-
+activeLoginWindows = []
 
 class Ui_MainWindow(object):
     def setupUi(self, mode, MainWindow):
@@ -151,11 +100,10 @@ def ActionUserAdd(mode, menu):
     class CustomMainWindow(QMainWindow):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            activeWindows.append(self)
+            activeLoginWindows.append(self)
 
         def closeEvent(self, event):
-            activeWindows.remove(self)
-            print(activeWindows)
+            activeLoginWindows.remove(self)
             event.accept()
 
 
@@ -170,9 +118,9 @@ def updateUserRemoveMenu(mode, menu):
 
     menu.clear()
     for user in users[mode]:
-        icon = active_icon if user['active'] else inactive_icon
+        icon = icons['active'] if user['active'] else icons['inactive']
         submenu = menu.addMenu(icon, user['username'])
-        subaction = submenu.addAction('Confirm')
+        subaction = submenu.addAction(icons['confirm'], '&Confirm')
         subaction.triggered.connect(lambda id=user['id']: deleteUser(mode, id))
 
 
@@ -182,13 +130,13 @@ def updateUserViewMenu(mode, menu):
     menu.clear()
     for user in users[mode]:
         if user['active']:
-            submenu = menu.addMenu(active_icon, user['username'])
-            subaction = submenu.addAction('Confirm')
-            subaction.triggered.connect(lambda *arg, user=user: deactivateUser(mode, user.get('id')))
+            submenu = menu.addMenu(icons['active'], user['username'])
+            subaction = submenu.addAction(icons['confirm'], '&Confirm')
+            subaction.triggered.connect(lambda *_, user=user: deactivateUser(mode, user.get('id')))
 
         else:
-            subaction = menu.addAction(inactive_icon, user['username'])
-            subaction.triggered.connect(lambda *arg, user=user: activateUser(mode, user.get('id')))
+            subaction = menu.addAction(icons['inactive'], user['username'])
+            subaction.triggered.connect(lambda *_, user=user: activateUser(mode, user.get('id')))
         
     
 def updateMainMenu(app, menu):
@@ -197,31 +145,31 @@ def updateMainMenu(app, menu):
     appData = getAppInfo()
 
     if appData['active']:
-        subaction = menu.addAction(active_icon, 'Active Monitoring')
+        subaction = menu.addAction(icons['active'], 'Active Monitoring')
         subaction.triggered.connect(lambda: deactivateMonitoring())
 
     else:
-        subaction = menu.addAction(inactive_icon, 'Inactive Monitoring')
+        subaction = menu.addAction(icons['inactive'], 'Inactive Monitoring')
         subaction.triggered.connect(lambda: activateMonitoring())
 
     menu.addSeparator()
 
     disabled = not appData['active']
 
-    submenu = menu.addMenu('Add Account')
-    submenu.addAction('Email').triggered.connect(lambda menu=submenu: ActionUserAdd('email', menu))
+    submenu = menu.addMenu(icons['add'], 'Add Account')
+    submenu.addAction(icons['email'], 'Email').triggered.connect(lambda menu=submenu: ActionUserAdd('email', menu))
     submenu.setDisabled(disabled)
 
-    submenu = menu.addMenu('Remove Account')
-    submenu.addMenu('Email').aboutToShow.connect(lambda menu=submenu: updateUserRemoveMenu('email', menu))
+    submenu = menu.addMenu(icons['remove'], 'Remove Account')
+    submenu.addMenu(icons['email'], 'Email').aboutToShow.connect(lambda menu=submenu: updateUserRemoveMenu('email', menu))
     submenu.setDisabled(disabled)
 
-    submenu = menu.addMenu('View Accounts')
-    submenu.addMenu('Email').aboutToShow.connect(lambda menu=submenu: updateUserViewMenu('email', menu))
+    submenu = menu.addMenu(icons['view'], 'View Accounts')
+    submenu.addMenu(icons['email'], 'Email').aboutToShow.connect(lambda menu=submenu: updateUserViewMenu('email', menu))
     submenu.setDisabled(disabled)
 
     menu.addSeparator()
-    subaction = menu.addAction('Quit')
+    subaction = menu.addAction(icons['quit'], '&Quit')
     subaction.triggered.connect(app.quit)
 
 
@@ -231,7 +179,7 @@ def main():
     app.setQuitOnLastWindowClosed(False)
 
     systray = QSystemTrayIcon()
-    systray.setIcon(main_icon)
+    systray.setIcon(icons['main'])
     systray.setVisible(True)
 
     menu = QMenu('PAIN')
