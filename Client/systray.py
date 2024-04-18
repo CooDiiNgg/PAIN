@@ -195,6 +195,7 @@ def updateUserViewMenu(mode, menu):
     
 def updateMainMenu(app, menu):
     menu.clear()
+    print('Updating main menu')
 
     appData = getAppInfo()
 
@@ -242,6 +243,7 @@ def main():
 
     menu = QMenu('PAIN')
     menu.aboutToShow.connect(lambda *_, app=app, menu=menu: updateMainMenu(app, menu))
+    menu.popup(QCursor.pos())
     systray.setContextMenu(menu)
     app.exec_()
 

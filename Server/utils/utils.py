@@ -6,8 +6,9 @@ import threading
 import time
 import queue
 from utils import email_reader
+from utils import database_work
 
-class Reader:
+class Reader_and_DB(database_work.DatabaseWork):
     def __init__(self):
         self.mail_obj = None
     

@@ -5,18 +5,7 @@ from dotenv import load_dotenv
 #for now only run it once
 
 ai = AI()
-reader = Reader()
-
-
-callback = queue.Queue()
-end = queue.Queue()
-ai_response = queue.Queue()
-filters = {'number': 2, 'excluded_users': []}
-load_dotenv()
-email = os.getenv("EMAIL")
-password = os.getenv("PASSWORD")
-
-
+reader = Reader_and_DB()
 
 
 class Checker:
@@ -39,7 +28,7 @@ class Checker:
         self.text = str(self.email)
         return self.text
     
-    def get_percentage(self):
+    def get_percentage(self, ai_response):
         for i in range(10):
             print(i)
             print(self.text)
@@ -57,7 +46,8 @@ class Checker:
         ai.clear_all()
         return True
     
-    def run(self):
+    def run(self, end, filters, email, password, ai_response):
+        callback = queue.Queue()
         reader.read_multithreading(callback, filters, email, password, end)
         while True:
             if not end.empty():
@@ -66,19 +56,9 @@ class Checker:
                 self.emails.append(callback.get())
                 if(self.get_email()):
                     self.get_text()
-                    self.get_percentage()
+                    self.get_percentage(ai_response)
                     self.clear_all()
             time.sleep(1)
         return True
     
 
-checker = Checker()
-try:
-    threading.Thread(target=checker.run).start()
-    while True:
-        if not ai_response.empty():
-            print(ai_response.get())
-except KeyboardInterrupt:
-    end.put(True)
-    print("Exiting")
-    exit(0)

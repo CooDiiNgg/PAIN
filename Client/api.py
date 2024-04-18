@@ -1,3 +1,14 @@
+import os
+import sys
+import time
+
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+
+sys.path.append(parentdir)
+
+from Server import pain
+
 appInfo = {
     'active': True,
 }
@@ -8,13 +19,16 @@ def getAppInfo():
 
 
 def getUsersInfo():
-    return {
-        'email': [
-            { 'id': 1, 'username': 'example1@example.com', 'active': True, },
-            { 'id': 2, 'username': 'example2@example.com', 'active': False, },
-            { 'id': 3, 'username': 'example3@example.com', 'active': True, },
-        ],
-    }
+    pain.get_users.put(1)
+    time.sleep(1)
+    return pain.get_users.get()
+    # return {
+    #     'email': [
+    #         { 'id': 1, 'username': 'example1@example.com', 'active': True, },
+    #         { 'id': 2, 'username': 'example2@example.com', 'active': False, },
+    #         { 'id': 3, 'username': 'example3@example.com', 'active': True, },
+    #     ],
+    # }
 
 
 def activateMonitoring():
@@ -24,6 +38,7 @@ def activateMonitoring():
 
 def deactivateMonitoring():
     appInfo['active'] = False
+    pain.end.put(1)
     print(f'Deactivate Monitoring')
 
 
@@ -37,6 +52,7 @@ def deactivateUser(mode, id):
 
 def addUser(mode, username, password):
     print(mode, username, password)
+    user = {"service": mode, "password": password, "email": username, "active": True}
     return None
 
 
@@ -45,4 +61,5 @@ def deleteUser(mode, id):
 
 
 def shutdownServer():
+    pain.flag = False
     print('Shutdown Server')
